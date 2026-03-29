@@ -1,31 +1,36 @@
-name: Get Hot News
+name: Hot News Deployment
 
 on:
   schedule:
-    - cron: "33 * * * *"  # 每小时的33分自动运行
-  workflow_dispatch:      # 允许你手动点击运行
+    - cron: "33 * * * *"
+  workflow_dispatch:
+
+# 核心修改：更换并发组名，绕过之前卡死的队列
+concurrency:
+  group: news-reset-v1
+  cancel-in-progress: false
 
 jobs:
   crawl:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
-      - name: Checkout repository
+      - name: 1. 拉取代码
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: 2. 安装Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install uv
+      - name: 3. 安装工具
         uses: astral-sh/setup-uv@v5
 
-      - name: Install dependencies
+      - name: 4. 安装依赖
         run: uv sync --frozen --no-dev
 
-      - name: Run crawler
+      - name: 5. 开启爬虫
         env:
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
